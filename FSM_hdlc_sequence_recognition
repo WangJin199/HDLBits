@@ -1,0 +1,127 @@
+module top_module(
+    input clk,
+    input reset,    // Synchronous reset
+    input in,
+    output disc,
+    output flag,
+    output err);
+	
+   
+    reg [2:0] ns, cs;
+    parameter [2:0] IDLE = 3'b000,S1 = 3'b001,S2 = 3'b010,S3 = 3'b011,S4 = 3'b100,S5 = 3'b101,S6 = 3'b110,Error = 3'b111;
+    
+    //第一个always模块
+    always @ (posedge clk)begin
+        if (reset) cs <= 0;
+        else cs<= ns;
+    end
+    
+    //第二个always模块
+    always @ (*)begin
+        if (reset) ns = IDLE;
+        else begin
+            case(cs)
+                IDLE:begin
+                    if (in) ns = S1;
+                    else ns = IDLE;
+                end
+                S1:begin
+                    if(in) ns = S2;
+                    else ns = IDLE;
+                end
+                S2:begin
+                    if(in) ns = S3;
+                    else ns = IDLE;
+                end
+                S3:begin
+                    if(in) ns = S4;
+                    else ns = IDLE;
+                end
+                S4:begin
+                    if(in) ns = S5;
+                    else ns = IDLE;
+                end
+                S5:begin
+                    if(in) ns = S6;
+                    else ns = IDLE;
+                end
+                S6:begin
+                    if(in) ns = Error;
+                    else ns = IDLE;
+                end
+                Error:begin
+                    if(in) ns = Error;
+                    else ns = IDLE;
+                end
+                default:ns = IDLE;
+            endcase
+        end
+    end
+    
+    //第三个always模块
+    reg disc_r;
+    reg flag_r;
+    reg err_r;
+    always @ (posedge clk)begin
+        if(reset) begin
+            		disc_r <= 0;
+        			flag_r <= 0;
+        			err_r <= 0;
+        end
+        else begin
+            case (cs)
+                IDLE:begin
+                    disc_r <= 0;
+                    flag_r <= 0;
+                    err_r <= 0;
+                end              
+                S5:begin
+                    if (!in)begin
+                        disc_r <= 1;
+                    	flag_r <= 0;
+                    	err_r <= 0;
+                    end
+                    else begin
+                        disc_r <= 0;
+                    	flag_r <= 0;
+                    	err_r <= 0;
+                	end      
+                end
+                S6:begin
+                    if (!in)begin
+                        disc_r <= 0;
+                    	flag_r <= 1;
+                    	err_r <= 0;
+                    end
+                    else begin
+                        disc_r <= 0;
+                    	flag_r <= 0;
+                    	err_r <= 1;
+                    end                  
+                end 
+                Error:begin
+                    if (in) begin
+                        disc_r <= 0;
+                    	flag_r <= 0;
+                    	err_r <= 1;
+                    end
+                    else begin
+                        disc_r <= 0;
+                    	flag_r <= 0;
+                    	err_r <= 0;
+                    end
+                end                 
+                default:begin
+                    disc_r <= 0;
+                    flag_r <= 0;
+                    err_r <= 0;
+                end
+            endcase
+        end
+    end
+    
+    assign disc = disc_r;
+    assign flag = flag_r;
+    assign err = err_r;
+        
+endmodule
