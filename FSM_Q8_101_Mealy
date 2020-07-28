@@ -1,0 +1,53 @@
+module top_module (
+    input clk,
+    input aresetn,    // Asynchronous active-low reset
+    input x,
+    output z ); 
+
+    reg [1:0] ns,cs;
+    parameter [1:0] S0 = 2'b00, S1 = 2'b01, S2 = 2'b10;
+    
+    //第一个always模块
+    always @ (posedge clk or negedge aresetn)begin
+        if (!aresetn) cs <= 0;
+    	else cs <= ns;
+    end
+    
+    //第二个always模块
+    always @ (*) begin
+        if (!aresetn) ns = 0;
+        else begin
+            case (cs)
+                S0:begin
+                    if (x) ns = S1;
+                    else ns = S0;
+                end
+                S1:begin
+                    if (x) ns = S1;
+                    else ns = S2;
+                end
+                S2:begin
+                    if (x) ns = S1;
+                    else ns = S0;
+                end
+                default:ns = S0;
+            endcase
+        end
+    end
+    
+    //第三个模块
+    /*always @ (posedge clk or negedge aresetn) begin
+        if (!aresetn) z <= 0;
+        else begin
+            case (cs)
+                S2:begin
+                    if (x) z <= 1;
+                    else z <= 0;
+                end
+                default: z <= 0;
+            endcase
+        end
+    end
+    */
+    assign z = ((cs == S2) && (x == 1))? 1'b1: 1'b0;
+endmodule
